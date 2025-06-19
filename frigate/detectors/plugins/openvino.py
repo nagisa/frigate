@@ -49,6 +49,9 @@ class OvDetector(DetectionApi):
             )
             self.model_invalid = True
 
+        expected_nwhc = ov.Shape([1, self.w, self.h, 3])
+        expected_ncwh = ov.Shape([1, 3, self.w, self.h])
+
         # Ensure the SSD model has the right input and output shapes
         if self.ov_model_type == ModelTypeEnum.ssd:
             model_inputs = self.interpreter.inputs
@@ -65,7 +68,7 @@ class OvDetector(DetectionApi):
                 )
                 self.model_invalid = True
 
-            if model_inputs[0].get_shape() != ov.Shape([1, self.w, self.h, 3]):
+            if model_inputs[0].get_shape() != expected_nwhc:
                 logger.error(
                     f"SSD model input doesn't match. Found {model_inputs[0].get_shape()}."
                 )
@@ -91,9 +94,10 @@ class OvDetector(DetectionApi):
                 )
                 self.model_invalid = True
 
-            if model_inputs[0].get_shape() != ov.Shape([1, 3, self.w, self.h]):
+            input_shape =model_inputs[0].get_shape()
+            if input_shape != expected_nwhc and input_shape != expected_ncwh:
                 logger.error(
-                    f"YoloNAS model input doesn't match. Found {model_inputs[0].get_shape()}, but expected {[1, 3, self.w, self.h]}."
+                    f"YoloNAS model input doesn't match. Found {input_shape}, but expected {[1, 3, self.w, self.h]} or {[1, self.w, self.h, 3]}."
                 )
                 self.model_invalid = True
 
